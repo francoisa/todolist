@@ -1,24 +1,44 @@
 {
-  "name": "todolist",
+  "name": "login",
   "version": "0.1.0",
   "private": true,
+  "main": "index.js",
+  "proxy": "http://localhost:3001/",
   "devDependencies": {
-    "react-scripts": "0.7.0",
-    "redux-devtools": "^3.3.1"
+    "babel-cli": "^6.24.0",
+    "concurrently": "^3.4.0",
+    "react-scripts": "0.9.5"
   },
   "dependencies": {
+    "async": "^2.1.5",
+    "body-parser": "^1.17.1",
     "bootstrap": "^3.3.7",
-    "react": "^15.4.1",
-    "react-bootstrap": "^0.30.7",
-    "react-dom": "^15.4.1",
-    "react-redux": "^4.4.6",
-    "redux": "^3.6.0"
-  },
-  "eslintConfig": {
-    "extends": "react-app"
+    "cassandra-driver": "^3.2.0",
+    "compression": "^1.6.2",
+    "connect": "^3.6.0",
+    "connect-rest": "^2.11.8",
+    "connect-timeout": "^1.8.0",
+    "cookie-parser": "^1.4.3",
+    "cookie-session": "^2.0.0-beta.1",
+    "cors": "^2.8.1",
+    "express": "^4.15.2",
+    "isomorphic-fetch": "^2.2.1",
+    "json-proxy": "^0.9.3",
+    "morgan": "^1.8.1",
+    "react": "^15.4.2",
+    "react-bootstrap": "^0.30.8",
+    "react-dom": "^15.4.2",
+    "react-redux": "^5.0.3",
+    "redux": "^3.6.0",
+    "redux-devtools": "^3.3.2",
+    "redux-devtools-dock-monitor": "^1.1.1",
+    "redux-devtools-log-monitor": "^1.2.0",
+    "redux-thunk": "^2.2.0",
+    "serve-static": "^1.12.1",
+    "sha1": "^1.1.1"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "concurrently \"react-scripts start\" \"node server/server\"",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
