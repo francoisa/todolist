@@ -189,6 +189,79 @@ function buildUpRestAPI(rest) {
       });
     });
   });
+
+rest.get('/todo/:user', function(req, content, cb) {
+  console.log('Executing GET /todo/:user');
+  client.connect(function (err) {
+    if (err) {
+      client.shutdown();
+      return console.error('There was an error when connecting', err);
+    }
+    console.log('Connected to cluster with %d host(s): %j', client.hosts.length, client.hosts.keys());
+    var username = req.params.user;
+    const sel_todos = 'SELECT id, content FROM todos WHERE username = ?';
+    client.execute(sel_todos, [username], { prepare: true }, function(err, result) {
+      assert.ifError(err);
+      let rows = result.rows.map((t) => {
+        return {id: t.id, item: t.item};
+      });
+      cb(null, rows);
+    });
+  });
+});
+
+  rest.post('/todo/:user', function(req, content, cb) {
+    console.log('Executing POST /todo');
+    client.connect(function (err) {
+      if (err) {
+        client.shutdown();
+        return console.error('There was an error when connecting', err);
+      }
+      console.log('Connected to cluster with %d host(s): %j', client.hosts.length, client.hosts.keys());
+      var username = req.params.user;
+      var id = content.id;
+      const sel_todo = 'SELECT content FROM todos WHERE id = ?';
+      var todo;
+      try {
+        client.execute(sel_todo, [id], { prepare: true }, function(err, result) {
+          assert.ifError(err);
+          result.rows.map(function(t) {
+            todo = {result: "ERROR", code: "DUPLICATE"};
+          });
+          if (todo === undefined) {
+            var params = [];
+            params.push(id);
+            params.push(content.item);
+            params.push(username);
+            const ins_todo = 'INSERT INTO todos (id, content, username) VALUES (?, ?, ?)';
+            try {
+              client.execute(ins_todo, params, { prepare: true },
+                  function(err, result) {
+                    assert.ifError(err);
+                    console.log('Inserted a row.');
+              });
+              todo = {username: username, content: content.item,
+                  id: content.id};
+            }
+            catch (e) {
+              todo = {result: "ERROR", code: "INSERT FAILED", msg: e};
+              console.log("Error inserting '" + content.item +
+                          "' for " + username);
+            }
+          }
+          else {
+            console.log('todo item for ' + username + ' exists');
+          }
+          cb(null, todo);
+      });
+    }
+    catch (e) {
+      todo = {result: "ERROR", code: "SELECT FAILED", msg: e};
+      console.log("Error checking for duplicate id '" + content.id +
+                  "' for " + username);
+    }
+    });
+  });
 }
 
 function getDispatcher (rest) {

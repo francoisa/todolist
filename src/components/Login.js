@@ -1,9 +1,11 @@
 import React, { Component } from 'react';
 import { Grid, Row, Col, Button } from 'react-bootstrap';
+import { connect } from 'react-redux';
+import { login } from '../actions/user'
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/css/bootstrap-theme.css';
 
-export class LoginApp extends Component {
+class Login extends Component {
   renderWelcomeMessage() {
     const { msg } = this.props
     return (<div>
@@ -47,3 +49,11 @@ export class LoginApp extends Component {
     );
   }
 };
+
+const mapStateToProps = null;
+
+const mapDispatchToProps = dispatch => ({
+  onLogin(user, pwd) { dispatch(login(user, pwd))}
+})
+
+export const LoginApp = connect(mapStateToProps, mapDispatchToProps)(Login)

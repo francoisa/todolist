@@ -1,54 +1,69 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import { store } from './store';
-import { addItem, listItems } from './actions/todolist'
-import { login, setLoginDetails } from './actions/user'
+import { setLoginDetails } from './actions/user'
 import { Provider, connect } from 'react-redux';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/css/bootstrap-theme.css';
 import { LoginApp } from './components/Login';
 import { TodoListApp } from './components/TodoList'
-import DevTools from './devtools'
 
-function mapStateToProps(state) {
-  const { user } = state;
-  return {user}
+function NotAuthenticated(props) {
+  const { user } = store.getState();
+  if (user.status === "LOGGEDOUT") {
+      return (<div>{props.children}</div>);
+  }
+  else {
+    return null;
+  }
 }
 
-const { createClass, PropTypes } = React;
+function Authenticated(props) {
+  const { user } = store.getState();
+  if (user.status === "LOGGEDIN") {
+      return (<div>{props.children}</div>);
+  }
+  else {
+    return null;
+  }
+}
 
-const AppBox = createClass({
-  conextTypes: {
-    store: PropTypes.object
-  },
+class AppBox extends Component {
   componentWillMount() {
     const { dispatch } = this.props;
     let storedSessionLogin = sessionStorage.getItem('login');
     if (storedSessionLogin) {
-      dispatch(setLoginDetails(JSON.parse(storedSessionLogin).loginResponse));
+      let details = JSON.parse(storedSessionLogin).loginResponse;
+      dispatch(setLoginDetails(details));
     }
-  },
+  }
   componentDidMount() {
     this.unsubscribe = store.subscribe( () => this.forceUpdate() )
-  },
+  }
   componentWillUnmount() {
     this.unsubscribe();
-  },
+  }
   render() {
-    const { user } = store.getState();
     return (
         <div>
-          <DevTools store={store}  />
-          <LoginApp
-            msg={user.message}
-            onLogin={ (u, p) => this.props.dispatch(login(u, p)) }
-          />
+          <NotAuthenticated>
+            <LoginApp/>
+          </NotAuthenticated>
+          <Authenticated>
+            <TodoListApp/>
+          </Authenticated>
         </div>
     );
   }
+}
+
+const mapStateToProps = state => ({
+  user: state.user
 })
 
-const App = connect(mapStateToProps)(AppBox);
+const mapDispatchToProps = null;
+
+const App = connect(mapStateToProps, mapDispatchToProps)(AppBox);
 
 class Root extends Component {
   render() {

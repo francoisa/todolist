@@ -1,17 +1,23 @@
+import { connect } from 'react-redux';
 import React, { Component } from 'react';
 import { Grid, Row, Col, Button } from 'react-bootstrap';
+import { addItem } from '../actions/todolist'
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/css/bootstrap-theme.css';
 
-export class TodoListApp extends Component {
+class TodoList extends Component {
   listItems() {
-    const { msg } = this.props
-    return (<div>
-      <ul>
-      <li>item 1</li>
-      <li>item 2</li>
-      </ul>
-      </div>);
+    const { todolist } = this.props;
+    let list = [];
+    if (todolist && todolist.items) {
+      list = todolist.items.map((item, i) => {
+        return <li key={i}>
+                <Button className="xs" onClick={() => this.props.onDelItem(item.id) }>Del</Button>
+                &nbsp;&nbsp;{item.name}
+               </li>
+      })
+    }
+    return (<ul>{list}</ul>);
   }
 
   addItem() {
@@ -22,7 +28,7 @@ export class TodoListApp extends Component {
         className="form-control"
         ref={ node => item = node }
         placeholder="enter text"/>
-      <Button onClick={() => this.props.addItem(item.value) }>Add</Button>
+      <Button onClick={() => this.props.onAddItem(item.value) }>Add</Button>
     </div>)
   }
 
@@ -43,3 +49,13 @@ export class TodoListApp extends Component {
     );
   }
 };
+
+const mapStateToProps = state => ({
+  todolist: state.todolist
+})
+
+const mapDispatchToProps = dispatch => ({
+  onAddItem(item) { dispatch(addItem(item))}
+})
+
+export const TodoListApp = connect(mapStateToProps, mapDispatchToProps)(TodoList)

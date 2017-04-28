@@ -2,13 +2,16 @@ import {
   LOGIN_USER
 } from '../actions/user';
 
-export const user = (state = {message: "Please log in ...",  username: ""}, action) =>
+export const user = (state = {status: "LOGGEDOUT",
+                              message: "Please log in ...",
+                              username: ""}, action) =>
 {
 
   switch(action.type) {
     case LOGIN_USER:
       if (action.loginResponse.result === 'SUCCESS') {
         state = {...state,
+            status: "LOGGEDIN",
             message : "Welcome " + action.loginResponse.username,
             username: "",
             timestamp: action.timestamp
