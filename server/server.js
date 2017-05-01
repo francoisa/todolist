@@ -11,7 +11,8 @@ let connect = require('connect'),
 	bodyParser = require('body-parser');
 
 let Rest = require('connect-rest');
-let restBuilder = require('./restBuilder');
+let initSqlite3 = require('./init-sqlite3');
+let restBuilder = require('./sqlite3-rest-builder');
 
 let app = connect()
 	.use(compression())
@@ -38,6 +39,10 @@ restBuilder.buildUpRestAPI(rest);
 let port = process.env.SRVPORT || 3001;
 let server = http.createServer(app);
 
-server.listen(port, function () {
-	console.log('rest api server running on http://localhost:' + port)
-});
+function start() {
+  server.listen(port, function () {
+  	console.log('rest api server running on http://localhost:' + port)
+  });
+}
+
+initSqlite3.createDb(start);
