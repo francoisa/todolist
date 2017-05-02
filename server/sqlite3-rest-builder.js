@@ -31,40 +31,57 @@ function buildUpRestAPI(rest) {
     });
   });
 
-  rest.get('/user/authenticate/:id/:pwd', function(req, content, cb) {
-    console.log('Executing GET /user/authenticate/:id/:pwd');
+  rest.get('/authenticate/:id/:pwd', function(req, content, cb) {
+    console.log('Executing GET /authenticate/:id/:pwd');
     var id = req.params.id;
-    var pwd = req.params.pwd;
     const db = openDb();
-    const sel_user = 'SELECT username, email, password, salt FROM users WHERE username = ?';
+    const sel_user = 'SELECT username, email, password, salt FROM users WHERE ' +
+                     'username = ?';
     var user = {result: "ERROR", code: "INVALID_PASSWORD"};
-    db.serialize(function() {
-      db.each(sel_user, function(err, u) {
-        var password = sha1(pwd + u.salt);
-        if (password === u.password.toString("hex")) {
+    var stmt = db.prepare(sel_user);
+    stmt.get(id, function(err, u) {
+      if (err) {
+        console.log("err: " + err);
+      }
+      if (u) {
+        var password = sha1(req.params.pwd + u.salt);
+        if (password === u.password) {
           user = {result: "SUCCESS", username: u.username, email: u.email,
               first_name: u.first_name, last_name: u.last_name};
         }
-      });
+        else {
+          console.log(password + ' !== ' + u.password);
+        }
+      }
+      else {
+        user = {result: "ERROR", code: "NOT_FOUND"};
+      }
+      stmt.finalize();
+      db.close();
+      cb(null, user);
     });
-    db.close();
-    cb(null, user);
   });
 
   rest.get('/user/:id', function(req, content, cb) {
     console.log('Executing GET /user/:id');
     var id = req.params.id;
     const db = openDb();
-    const sel_user = 'SELECT username, email, first_name, last_name FROM users WHERE username = ?';
+    const sel_user = 'SELECT username, email, first_name, last_name ' +
+                     'FROM users WHERE username = ?';
     var user = {result: "ERROR", code: "NOT_FOUND"};
-    db.serialize(function() {
-      db.each(sel_user, function(err, u) {
+    var stmt = db.prepare(sel_user);
+    stmt.get(id, function(err, u) {
+      if (err) {
+        console.log("err: " + err);
+      }
+      if (u) {
         user = {username: u.username, email: u.email,
             first_name: u.first_name, last_name: u.last_name};
-      });
+      }
+      stmt.finalize();
+      db.close();
+      cb(null, user);
     });
-    db.close();
-    cb(null, user);
   });
 
   rest.put('/user', function(req, content, cb) {
@@ -102,13 +119,13 @@ function buildUpRestAPI(rest) {
 
   rest.post('/user', function(req, content, cb) {
     console.log('Executing POST /user');
+    const db = openDb();
     var params = [];
     params.push(content.username);
-    var salt = Date.now();
+    var salt = Date.now() + '';
     params.push(salt);
     var password = sha1(content.password + salt);
-    var pwdBuffer = Buffer.from(password, "hex");
-    params.push(pwdBuffer);
+    params.push(password);
     params.push(content.email);
     params.push(content.first_name);
     params.push(content.last_name);
@@ -125,9 +142,10 @@ function buildUpRestAPI(rest) {
     cb(null, user);
   });
 
-  rest.del('/user/:id', function(req, content, cb) {
+  rest.del('/user/:user', function(req, content, cb) {
     console.log('Executing DELETE /user/:id');
-    var id = req.params.id;
+    const db = openDb();
+    const id = req.params.user;
     const del_user = 'DELETE FROM users WHERE username = ?';
     var user = {result: "SUCCESS", username: id};
     db.serialize(function() {
@@ -141,34 +159,78 @@ function buildUpRestAPI(rest) {
 
   rest.get('/todo/:user', function(req, content, cb) {
     console.log('Executing GET /todo/:user');
-    var username = req.params.user;
-    const sel_todos = 'SELECT id, content FROM todos WHERE username = ?';
+    const db = openDb();
+    const username = req.params.user;
+    const sel_todos = 'SELECT rowid, content, status FROM todos WHERE username = ?';
     var rows = [];
-    db.serialize(function() {
-      db.each(sel_user, function(err, u) {
-        rows.push({username: u.username, email: u.email,
-            first_name: u.first_name, last_name: u.last_name});
-      });
+    db.all(sel_todos, username, function(err, todos) {
+      if (err) {
+        todos = {status: "FAILUE", code: "QUERY_ERROR"};
+        console.log("Error '" + err + "' in " + sel_todos)
+      }
+      else if (!todos) {
+        console.log("No rows returned.")
+      }
+      db.close();
+      cb(null, todos);
     });
-    db.close();
-    cb(null, rows);
   });
 
   rest.post('/todo/:user', function(req, content, cb) {
+    console.log('Executing POST /todo/:user');
     const ins_todo = 'INSERT INTO todos (username, content, status) VALUES (?, ?, ?)';
+    const db = openDb();
     var params = [];
-    params.push(content.username);
+    const username = req.params.user;
+    params.push(username);
     params.push(content.content);
     params.push(content.status);
+    var todo = {status: "FAILURE", code: "INSERT_FAILED"};
     db.serialize(function() {
       var stmt = db.prepare(ins_todo);
       stmt.run(params);
       stmt.finalize();
-      user = {username: content.username, email: content.email,
-          first_name: content.first_name, last_name: content.last_name};
+      todo = {username: username, content: content.content,
+              status: content.status};
     });
     db.close();
-    cb(null, user);
+    cb(null, todo);
+  });
+
+  rest.put('/todo/:id', function(req, content, cb) {
+    console.log('PUT /todo/:user');
+    const upd_todo = 'UPDATE todos SET content = ?, status = ? WHERE rowid = ?';
+    const db = openDb();
+    var params = [];
+    const id = req.params.id;
+    params.push(content.content);
+    params.push(content.status);
+    params.push(username);
+    var todo = {status: "FAILURE", code: "UPDATE_FAILED"};
+    db.serialize(function() {
+      var stmt = db.prepare(upd_todo);
+      stmt.run(params);
+      stmt.finalize();
+      todo = {status: "SUCCESS"};
+    });
+    db.close();
+    cb(null, todo);
+  });
+
+  rest.del('/todo/:id', function(req, content, cb) {
+    console.log('DELETE /todo/:user');
+    const del_todo = 'DELETE FROM todos WHERE rowid = ?';
+    const db = openDb();
+    const id = req.params.id;
+    var todo = {status: "FAILURE", code: "DELETE_FAILED"};
+    db.serialize(function() {
+      var stmt = db.prepare(del_todo);
+      stmt.run(id);
+      stmt.finalize();
+      todo = {status: "SUCCESS"};
+    });
+    db.close();
+    cb(null, todo);
   });
 }
 

@@ -14,7 +14,7 @@ function createDb(startServer) {
 function createUsersTable() {
     console.log("createUsersTable");
     db.run("CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT, " +
-           "salt TEXT, email TEXT, first_name TEXT, last_name TEXT),)",
+           "salt TEXT, email TEXT, first_name TEXT, last_name TEXT)",
            createTodosTable);
 }
 
