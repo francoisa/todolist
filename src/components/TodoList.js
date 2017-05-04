@@ -1,42 +1,54 @@
 import { connect } from 'react-redux';
 import React, { Component } from 'react';
-import { Grid, Row, Col, Button } from 'react-bootstrap';
-import { addItem } from '../actions/todolist'
+import { Grid, Row, Col, Button, ListGroup, ListGroupItem, FormGroup } from 'react-bootstrap';
+import { addItem, delItem } from '../actions/todolist'
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/css/bootstrap-theme.css';
 
 class TodoList extends Component {
   listItems() {
     const { todolist } = this.props;
+    const { username } = this.props.user;
     let list = [];
-    if (todolist && todolist.items) {
-      list = todolist.items.map((item, i) => {
-        return <li key={i}>
-                <Button className="xs" onClick={() => this.props.onDelItem(item.id) }>Del</Button>
-                &nbsp;&nbsp;{item.name}
-               </li>
+    if (todolist) {
+      list = todolist.map((item, i) => {
+        return <ListGroupItem key={i}>
+                <Button bsSize="xs" onClick={() => this.props.onDelItem(username, item.rowid) }>Del</Button>
+                &nbsp;&nbsp;{item.content}
+               </ListGroupItem>
       })
     }
-    return (<ul>{list}</ul>);
+    return (<ListGroup>{list}</ListGroup>);
   }
 
   addItem() {
-    let item;
-    return (<div>
+    let item, stat;
+    const { username } = this.props.user;
+    return (<form>
+      <FormGroup bsSize="small">
       <input
         type="text"
         className="form-control"
         ref={ node => item = node }
         placeholder="enter text"/>
-      <Button onClick={() => this.props.onAddItem(item.value) }>Add</Button>
-    </div>)
+        <label>Status:</label>
+        <select
+          ref={ node => stat = node }
+          name="status">
+          <option>open</option>
+          <option>in progress</option>
+          <option>complete</option>
+        </select>
+      <Button bsSize="xs" onClick={() => this.props.onAddItem(username, item.value, stat.value) }>Add</Button>
+    </FormGroup>
+    </form>)
   }
 
   render () {
     return (
       <Grid>
         <Row>
-          <Col xs={4} md={4}>
+          <Col xs={8} md={8}>
             {this.addItem()}
           </Col>
         </Row>
@@ -51,11 +63,13 @@ class TodoList extends Component {
 };
 
 const mapStateToProps = state => ({
-  todolist: state.todolist
+  todolist: state.user.itemList,
+  user: state.user.user
 })
 
 const mapDispatchToProps = dispatch => ({
-  onAddItem(item) { dispatch(addItem(item))}
+  onAddItem(item, stat) { dispatch(addItem(item, stat))},
+  onDelItem(user, id) { dispatch(delItem(user, id)) }
 })
 
 export const TodoListApp = connect(mapStateToProps, mapDispatchToProps)(TodoList)

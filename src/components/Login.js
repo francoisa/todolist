@@ -7,9 +7,9 @@ import 'bootstrap/dist/css/bootstrap-theme.css';
 
 class Login extends Component {
   renderWelcomeMessage() {
-    const { msg } = this.props
+    const { message } = this.props.user
     return (<div>
-      {msg}
+      {message}
       </div>);
   }
 
@@ -50,7 +50,9 @@ class Login extends Component {
   }
 };
 
-const mapStateToProps = null;
+const mapStateToProps = state => ({
+  user: state.user
+})
 
 const mapDispatchToProps = dispatch => ({
   onLogin(user, pwd) { dispatch(login(user, pwd))}
