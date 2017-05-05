@@ -1,36 +1,54 @@
 import { connect } from 'react-redux';
 import React, { Component } from 'react';
-import { Grid, Row, Col, Button, ListGroup, ListGroupItem, FormGroup } from 'react-bootstrap';
+import { Form, Grid, Row, Col, Button, ListGroup, ListGroupItem, FormGroup } from 'react-bootstrap';
 import { addItem, delItem } from '../actions/todolist'
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/css/bootstrap-theme.css';
 
 class TodoList extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { item: true };
+  }
   listItems() {
     const { todolist } = this.props;
     const { username } = this.props.user;
-    let list = [];
-    if (todolist) {
+    if (todolist && todolist.length > 0) {
+      let list = [];
       list = todolist.map((item, i) => {
         return <ListGroupItem key={i}>
                 <Button bsSize="xs" onClick={() => this.props.onDelItem(username, item.rowid) }>Del</Button>
                 &nbsp;&nbsp;{item.content}
                </ListGroupItem>
       })
+      return (<Row>Todo List:<ListGroup>{list}</ListGroup></Row>);
     }
-    return (<ListGroup>{list}</ListGroup>);
+    else {
+      return (<Row>Your list is empty</Row>);
+    }
+  }
+
+  hasItem(item) {
+    if (item && item !== '') {
+      this.setState({item: false});
+    }
+    else {
+      this.setState({item: true});
+    }
   }
 
   addItem() {
     let item, stat;
     const { username } = this.props.user;
-    return (<form>
+    return (<Form inline>
       <FormGroup bsSize="small">
       <input
         type="text"
         className="form-control"
         ref={ node => item = node }
-        placeholder="enter text"/>
+        placeholder="enter text"
+        onChange={(e) => this.hasItem(e.target.value)}/>
+        &nbsp;
         <label>Status:</label>
         <select
           ref={ node => stat = node }
@@ -39,19 +57,27 @@ class TodoList extends Component {
           <option>in progress</option>
           <option>complete</option>
         </select>
-      <Button bsSize="xs" onClick={() => this.props.onAddItem(username, item.value, stat.value) }>Add</Button>
+      <Button
+        bsSize="xs"
+        bsStyle="primary"
+        disabled={this.state.item}
+        onClick={() => this.props.onAddItem(username, item.value, stat.value) }>
+        Add
+      </Button>
     </FormGroup>
-    </form>)
+    </Form>)
   }
 
   render () {
     return (
       <Grid>
+        <Row>&nbsp;</Row>
         <Row>
           <Col xs={8} md={8}>
             {this.addItem()}
           </Col>
         </Row>
+        <Row>&nbsp;</Row>
         <Row>
           <Col xs={4} md={4}>
             {this.listItems()}
@@ -68,7 +94,7 @@ const mapStateToProps = state => ({
 })
 
 const mapDispatchToProps = dispatch => ({
-  onAddItem(item, stat) { dispatch(addItem(item, stat))},
+  onAddItem(user, item, stat) { dispatch(addItem(user, item, stat))},
   onDelItem(user, id) { dispatch(delItem(user, id)) }
 })
 
