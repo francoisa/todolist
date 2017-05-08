@@ -13,7 +13,9 @@ export const todolist = (state = {items: []}, action) => {
         state.items.push(action.item)
         return state;
       case LIST_ITEMS:
-        state = {...state, items: action.items, user: action.user }
+        state = {...state,
+          items: action.items,
+          user: action.user }
         return state;
       default:
         return state;

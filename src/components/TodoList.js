@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import React, { Component } from 'react';
 import { Form, Grid, Row, Col, Button, ListGroup, ListGroupItem, FormGroup } from 'react-bootstrap';
-import { addItem, delItem } from '../actions/todolist'
+import { addItem, delItem, listItems } from '../actions/todolist'
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/css/bootstrap-theme.css';
 
@@ -10,6 +10,11 @@ class TodoList extends Component {
     super(props);
     this.state = { item: true };
   }
+
+  componentWillMount() {
+    this.props.initTodoList(this.props.user);
+  }
+  
   listItems() {
     const { todolist } = this.props;
     const { username } = this.props.user;
@@ -89,11 +94,12 @@ class TodoList extends Component {
 };
 
 const mapStateToProps = state => ({
-  todolist: state.user.itemList,
+  todolist: state.todolist.items,
   user: state.user.user
 })
 
 const mapDispatchToProps = dispatch => ({
+  initTodoList(user) { dispatch(listItems(user))},
   onAddItem(user, item, stat) { dispatch(addItem(user, item, stat))},
   onDelItem(user, id) { dispatch(delItem(user, id)) }
 })
