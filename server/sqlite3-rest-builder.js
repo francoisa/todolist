@@ -205,7 +205,7 @@ function buildUpRestAPI(rest) {
     const id = req.params.id;
     params.push(content.content);
     params.push(content.status);
-    params.push(username);
+    params.push(id);
     var todo = {status: "FAILURE", code: "UPDATE_FAILED"};
     db.serialize(function() {
       var stmt = db.prepare(upd_todo);

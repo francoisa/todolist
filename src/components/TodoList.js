@@ -17,9 +17,9 @@ class TodoList extends Component {
       editItem: true
     };
     this.statClass = {
-      open: "warn",
-      inprogress: "progress",
-      complete: "alert"
+      open: "info",
+      "in progress": "success",
+      complete: "danger"
     };
   }
 
@@ -33,6 +33,10 @@ class TodoList extends Component {
   closeEdit() {
     this.setState({showEdit: false});
   }
+  submitEdit(username, itemId, itemContent, stat) {
+    this.closeEdit();
+    this.props.onEditItem(username, itemId, itemContent, stat);
+  }
   listItems() {
     const { todolist } = this.props;
     const { username } = this.props.user;
@@ -40,7 +44,7 @@ class TodoList extends Component {
     if (todolist && todolist.length > 0) {
       let list = [];
       list = todolist.map((item, i) => {
-        return <ListGroupItem key={i} className={this.statClass[item.status]}>
+        return <ListGroupItem key={i} bsStyle={this.statClass[item.status]}>
                 <Button bsSize="xs" onClick={() => this.props.onDelItem(username, item.rowid) }>
                   Del
                 </Button>
@@ -90,7 +94,7 @@ class TodoList extends Component {
                         bsSize="xs"
                         bsStyle="primary"
                         disabled={this.state.editItem}
-                        onClick={() => this.props.onEditItem(username, itemId.value, itemContent.value, stat.value) }
+                        onClick={() => this.submitEdit(username, itemId.value, itemContent.value, stat.value) }
                         >
                         Submit
                       </Button>
