@@ -1,5 +1,6 @@
 import fetch from 'isomorphic-fetch'
 export const LOGIN_USER = 'LOGIN_USER'
+export const LOGOUT_USER = 'LOGOUT_USER'
 
 export function setLoginDetails(json) {
   const loginData = {
@@ -25,4 +26,13 @@ export function login(user, pwd) {
       .then(response => response.json())
     .then(json => dispatch(setLoginDetails(json)))
   }
+}
+
+export function logout() {
+  const logoutData = {
+    type: LOGOUT_USER,
+    timestamp: Date.now()
+  };
+  sessionStorage.removeItem('login');
+  return logoutData;
 }

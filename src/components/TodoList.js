@@ -1,7 +1,8 @@
 import { connect } from 'react-redux';
 import React, { Component } from 'react';
-import { Modal, Form, Grid, Row, Col, Button, ListGroup, ListGroupItem, FormGroup } from 'react-bootstrap';
+import { Nav, NavItem, Modal, Form, Grid, Row, Col, Button, ListGroup, ListGroupItem, FormGroup } from 'react-bootstrap';
 import { editItem, addItem, delItem, listItems } from '../actions/todolist'
+import { logout } from '../actions/user'
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/css/bootstrap-theme.css';
 
@@ -169,6 +170,17 @@ class TodoList extends Component {
   render () {
     return (
       <Grid>
+        <Row>
+          <Col xs={8} md={8}>
+            <Nav bsStyle="pills" pullRight={true} activeKey={1}>
+                <NavItem
+                  eventKey={1}
+                  onClick={() => this.props.onLogout()}>
+                  Logout
+              </NavItem>
+            </Nav>
+          </Col>
+        </Row>
         <Row>&nbsp;</Row>
         <Row>
           <Col xs={8} md={8}>
@@ -192,6 +204,7 @@ const mapStateToProps = state => ({
 })
 
 const mapDispatchToProps = dispatch => ({
+  onLogout() { dispatch(logout()) },
   initTodoList(user) { dispatch(listItems(user))},
   onAddItem(user, item, stat) { dispatch(addItem(user, item, stat))},
   onEditItem(user, id, item, stat) { dispatch(editItem(user, id, item, stat))},

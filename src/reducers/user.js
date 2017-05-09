@@ -1,5 +1,5 @@
 import {
-  LOGIN_USER
+  LOGIN_USER, LOGOUT_USER
 } from '../actions/user';
 
 export const user = (state = {status: "LOGGEDOUT",
@@ -7,6 +7,13 @@ export const user = (state = {status: "LOGGEDOUT",
                               username: ""}, action) =>
 {
   switch(action.type) {
+    case LOGOUT_USER:
+      state = {status: "LOGGEDOUT",
+          message: "Please log in ...",
+          username: "",
+          timestamp: action.timestamp
+      }
+      return state;
     case LOGIN_USER:
       const { loginResponse } = action;
       if (loginResponse.result === 'SUCCESS') {
