@@ -1,32 +1,106 @@
 import { connect } from 'react-redux';
 import React, { Component } from 'react';
-import { Form, Grid, Row, Col, Button, ListGroup, ListGroupItem, FormGroup } from 'react-bootstrap';
-import { addItem, delItem, listItems } from '../actions/todolist'
+import { Modal, Form, Grid, Row, Col, Button, ListGroup, ListGroupItem, FormGroup } from 'react-bootstrap';
+import { editItem, addItem, delItem, listItems } from '../actions/todolist'
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/css/bootstrap-theme.css';
 
 class TodoList extends Component {
   constructor(props) {
     super(props);
-    this.state = { item: true };
+    this.state = {
+      addItem: true,
+      showEdit: false,
+      editId: 0,
+      editContent: "",
+      editStat: "complete",
+      editItem: true
+    };
+    this.statClass = {
+      open: "warn",
+      inprogress: "progress",
+      complete: "alert"
+    };
   }
 
   componentWillMount() {
     this.props.initTodoList(this.props.user);
   }
-  
+
+  onEditItem(username, id, content, status) {
+    this.setState({showEdit: true, editId: id, editContent: content, editStat: status});
+  }
+  closeEdit() {
+    this.setState({showEdit: false});
+  }
   listItems() {
     const { todolist } = this.props;
     const { username } = this.props.user;
+    let itemId, itemContent, stat;
     if (todolist && todolist.length > 0) {
       let list = [];
       list = todolist.map((item, i) => {
-        return <ListGroupItem key={i}>
-                <Button bsSize="xs" onClick={() => this.props.onDelItem(username, item.rowid) }>Del</Button>
-                &nbsp;&nbsp;{item.content}
+        return <ListGroupItem key={i} className={this.statClass[item.status]}>
+                <Button bsSize="xs" onClick={() => this.props.onDelItem(username, item.rowid) }>
+                  Del
+                </Button>
+                &nbsp;|&nbsp;
+                <Button bsSize="xs" onClick={() => this.onEditItem(username, item.rowid, item.content, item.status) }>
+                  Edit
+                </Button>
+                &nbsp;&nbsp;[{item.status}]&nbsp;{item.content}
                </ListGroupItem>
       })
-      return (<Row>Todo List:<ListGroup>{list}</ListGroup></Row>);
+      itemContent = this.state.editContent;
+      return (<Row>
+                Todo List:
+                <ListGroup>{list}</ListGroup>
+                <Modal show={this.state.showEdit} onHide={() => this.closeEdit()}>
+                  <Modal.Header closeButton>
+                    <Modal.Title>Edit</Modal.Title>
+                  </Modal.Header>
+                  <Modal.Body>
+                  <Form inline>
+                    <FormGroup bsSize="small">
+                      <input
+                        type="hidden"
+                        value={this.state.editId}
+                        ref={ node => itemId = node }
+                        />
+                      <input
+                        type="text"
+                        className="form-control"
+                        ref={ node => itemContent = node }
+                        placeholder="enter text"
+                        onChange={(e) => this.editItem(e.target.value)}
+                        />
+                        &nbsp;
+                      <label>Status:</label>
+                      <select
+                        ref={ node => stat = node }
+                        selected={this.state.editStat}
+                        name="status">
+                        <option>open</option>
+                        <option>in progress</option>
+                        <option>complete</option>
+                      </select>
+                      &nbsp;
+                      <Button
+                        bsSize="xs"
+                        bsStyle="primary"
+                        disabled={this.state.editItem}
+                        onClick={() => this.props.onEditItem(username, itemId.value, itemContent.value, stat.value) }
+                        >
+                        Submit
+                      </Button>
+                    </FormGroup>
+                  </Form>
+                  </Modal.Body>
+                  <Modal.Footer>
+                    <Button onClick={() => this.closeEdit()}>Close</Button>
+                  </Modal.Footer>
+                </Modal>
+              </Row>);
     }
     else {
       return (<Row>Your list is empty</Row>);
@@ -35,10 +109,19 @@ class TodoList extends Component {
 
   hasItem(item) {
     if (item && item !== '') {
-      this.setState({item: false});
+      this.setState({addItem: false});
     }
     else {
-      this.setState({item: true});
+      this.setState({addItem: true});
+    }
+  }
+
+  editItem(item) {
+    if (item && item !== '') {
+      this.setState({editItem: false});
+    }
+    else {
+      this.setState({editItem: true});
     }
   }
 
@@ -47,13 +130,13 @@ class TodoList extends Component {
     const { username } = this.props.user;
     return (<Form inline>
       <FormGroup bsSize="small">
-      <input
-        type="text"
-        className="form-control"
-        ref={ node => item = node }
-        placeholder="enter text"
-        onChange={(e) => this.hasItem(e.target.value)}/>
-        &nbsp;
+        <input
+          type="text"
+          className="form-control"
+          ref={ node => item = node }
+          placeholder="enter text"
+          onChange={(e) => this.hasItem(e.target.value)}/>
+          &nbsp;
         <label>Status:</label>
         <select
           ref={ node => stat = node }
@@ -62,13 +145,14 @@ class TodoList extends Component {
           <option>in progress</option>
           <option>complete</option>
         </select>
-      <Button
-        bsSize="xs"
-        bsStyle="primary"
-        disabled={this.state.item}
-        onClick={() => this.props.onAddItem(username, item.value, stat.value) }>
-        Add
-      </Button>
+        &nbsp;
+        <Button
+          bsSize="xs"
+          bsStyle="primary"
+          disabled={this.state.addItem}
+          onClick={() => this.props.onAddItem(username, item.value, stat.value) }>
+          Add
+        </Button>
     </FormGroup>
     </Form>)
   }
@@ -84,7 +168,7 @@ class TodoList extends Component {
         </Row>
         <Row>&nbsp;</Row>
         <Row>
-          <Col xs={4} md={4}>
+          <Col xs={8} md={8}>
             {this.listItems()}
           </Col>
         </Row>
@@ -101,6 +185,7 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = dispatch => ({
   initTodoList(user) { dispatch(listItems(user))},
   onAddItem(user, item, stat) { dispatch(addItem(user, item, stat))},
+  onEditItem(user, id, item, stat) { dispatch(editItem(user, id, item, stat))},
   onDelItem(user, id) { dispatch(delItem(user, id)) }
 })
 
