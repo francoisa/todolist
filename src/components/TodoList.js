@@ -14,7 +14,7 @@ class TodoList extends Component {
       editId: 0,
       editContent: "",
       editStat: "complete",
-      editItem: true
+      editItem: false
     };
     this.statClass = {
       open: "info",
@@ -36,6 +36,9 @@ class TodoList extends Component {
   submitEdit(username, itemId, itemContent, stat) {
     this.closeEdit();
     this.props.onEditItem(username, itemId, itemContent, stat);
+  }
+  changeStatus(e) {
+    this.setState({editStat: e.target.value});
   }
   listItems() {
     const { todolist } = this.props;
@@ -83,8 +86,9 @@ class TodoList extends Component {
                       <label>Status:</label>
                       <select
                         ref={ node => stat = node }
-                        selected={this.state.editStat}
-                        name="status">
+                        value={this.state.editStat}
+                        name="status"
+                        onChange={(e) => this.changeStatus(e)}>
                         <option>open</option>
                         <option>in progress</option>
                         <option>complete</option>
