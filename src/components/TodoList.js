@@ -70,6 +70,7 @@ class TodoList extends Component {
                       <input
                         type="text"
                         className="form-control"
+                        defaultValue={this.state.editContent}
                         ref={ node => itemContent = node }
                         placeholder="enter text"
                         onChange={(e) => this.editItem(e.target.value)}
