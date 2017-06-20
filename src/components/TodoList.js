@@ -3,10 +3,10 @@ import React, { Component } from 'react';
 import { Nav, NavItem, Modal, Form, Grid, Row, Col, Button, ListGroup, ListGroupItem, FormGroup } from 'react-bootstrap';
 import { editItem, addItem, delItem, listItems } from '../actions/todolist'
 import { logout } from '../actions/user'
-import 'bootstrap/dist/css/bootstrap.css';
-import 'bootstrap/dist/css/bootstrap-theme.css';
+//import 'bootstrap/dist/css/bootstrap.css';
+//import 'bootstrap/dist/css/bootstrap-theme.css';
 
-class TodoList extends Component {
+export class TodoList extends Component {
   constructor(props) {
     super(props);
     this.state = {
