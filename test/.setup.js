@@ -1,4 +1,9 @@
-require('babel-register')();
+process.env.NODE_ENV = 'test'
+require('babel-register')({
+  ignore: /node_modules\/(?!jsdom)/
+});
+
+require("babel-polyfill");
 
 const jsdom = require('jsdom');
 const { JSDOM } = jsdom;
@@ -19,4 +24,4 @@ global.navigator = {
   userAgent: 'node.js'
 };
 
-documentRef = document;
+export const documentRef = document;

@@ -2,10 +2,8 @@ import React, { Component } from 'react';
 import { Grid, Row, Col, Button } from 'react-bootstrap';
 import { connect } from 'react-redux';
 import { login } from '../actions/user'
-import 'bootstrap/dist/css/bootstrap.css';
-import 'bootstrap/dist/css/bootstrap-theme.css';
 
-class Login extends Component {
+export class Login extends Component {
   renderWelcomeMessage() {
     const { message } = this.props.user
     return (<div>
