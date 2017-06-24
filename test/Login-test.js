@@ -16,7 +16,7 @@ describe('The Login component', () => {
     user = { message: "Please login" };
     if (!mountedLogin) {
       mountedLogin = mount(
-        <Login user={user}
+        <Login user={user} onLogin={nop}
         />
       );
     }
@@ -33,5 +33,9 @@ describe('The Login component', () => {
 
   it ("has a 'user' property", () => {
     expect(login().props().user).to.exist;
+  });
+
+  it ("has a 'onLogin' property", () => {
+    expect(login().props().onLogin).to.exist;
   });
 });
