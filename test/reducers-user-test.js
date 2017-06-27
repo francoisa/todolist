@@ -6,7 +6,7 @@ import {
   user
 } from '../src/reducers/user';
 
-describe("login Reducer", () => {
+describe("user Reducer", () => {
 
   it("LOGIN_USER success", () => {
     const state = {}
