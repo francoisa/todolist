@@ -6,9 +6,9 @@ import {
   user
 } from '../src/reducers/user';
 
-describe("user Reducer", () => {
+describe("The user Reducer", () => {
 
-  it("LOGIN_USER success", () => {
+  it("the LOGIN_USER action type creates a logged in user", () => {
     const state = {}
     const action = {
       type: LOGIN_USER,
@@ -25,7 +25,7 @@ describe("user Reducer", () => {
     expect(actual_state).to.deep.equal(expected_state)
   })
 
-  it("LOGOUT_USER success", () => {
+  it("the LOGOUT_USER action type removes the user session", () => {
     const state = {}
     const action = {
       type: LOGOUT_USER,

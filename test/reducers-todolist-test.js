@@ -4,9 +4,9 @@ import {
 } from '../src/actions/todolist';
 import { todolist } from '../src/reducers/todolist';
 
-describe("todolist Reducer", () => {
+describe("The todolist Reducer", () => {
 
-  it("ADD_ITEM success", () => {
+  it("the ADD_ITEM action type adds an item to the list", () => {
     const state = {}
     const action = {
       type: ADD_ITEM,
@@ -19,7 +19,7 @@ describe("todolist Reducer", () => {
     expect(actual_state).to.deep.equal(expected_state)
   })
 
-  it("LIST_ITEMS success", () => {
+  it("the LIST_ITEMS action type lists the items", () => {
     const state = {}
     const action = {
       type: LIST_ITEMS,
