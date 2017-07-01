@@ -1,4 +1,4 @@
-import fetch from 'isomorphic-fetch'
+import 'whatwg-fetch'
 
 export const ADD_ITEM = 'ADD_ITEM'
 export const LIST_ITEMS = 'LIST_ITEMS'
@@ -65,8 +65,7 @@ export function listItems(user) {
   const APIKEY = '849b7648-14b8-4154-9ef2-8d1dc4c2b7e9';
   const options = {headers: {
       'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer 1234567890'
+      'Content-Type': 'application/json'
     },
     method: 'GET',
   }
