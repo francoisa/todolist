@@ -6,7 +6,7 @@ const http = require('http');
 const express = require('express');
 const app = express();
 
-var { User, Todo } = require('./sqlite3-crud');
+var { User, Todo } = require('./sqlite3-dao');
 
 const user = new User();
 const todo = new Todo();
@@ -65,7 +65,7 @@ function buildUpRestAPI(rest) {
 
   rest.get('/todo/:user', function(req, content, cb) {
     console.log('Executing GET /todo/:user');
-    todo.read(req.params.user, cb);
+    todo.list(req.params.user, cb);
   });
 
   rest.post('/todo/:user', function(req, content, cb) {

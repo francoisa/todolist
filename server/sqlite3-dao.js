@@ -135,11 +135,25 @@ User.prototype.delete = function(id, cb) {
 function Todo() {
 }
 
-Todo.prototype.read = function(username, cb) {
-  console.log('Executing GET /todo/:user');
+Todo.prototype.read = function(id, cb) {
+  const db = openDb();
+  const sel_todos = 'SELECT rowid, content, status, username FROM todos WHERE rowid = ?';
+  db.all(sel_todos, id, function(err, todos) {
+    if (err) {
+      todos = {status: "FAILURE", code: "QUERY_ERROR"};
+      console.log("Error '" + err + "' in " + sel_todos)
+    }
+    else if (!todos) {
+      console.log("No rows returned.")
+    }
+    db.close();
+    cb(null, todos);
+  });
+}
+
+Todo.prototype.list = function(username, cb) {
   const db = openDb();
   const sel_todos = 'SELECT rowid, content, status FROM todos WHERE username = ?';
-  var rows = [];
   db.all(sel_todos, username, function(err, todos) {
     if (err) {
       todos = {status: "FAILUE", code: "QUERY_ERROR"};
