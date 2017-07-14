@@ -22,94 +22,66 @@ import {
 } from 'graphql-relay';
 
 import {
-  Todo,
-  User
+  User,
+  UserDao
 } from './sqlite3-dao';
 
-let todo = new Todo();
-let user = new User();
+const user = new UserDao();
 
 const {nodeInterface, nodeField} = nodeDefinitions(
   (globalId) => {
     const {type, id} = fromGlobalId(globalId);
-    if (type === 'Todo') {
-      return todo.read(id);
-    }
-    else if (type === 'User') {
+    console.log('type = ' + type);
+    console.log('id = ' + id);
+    if (type === 'User') {
       return user.read(id);
     }
     return null;
   },
   (obj) => {
-    if (obj instanceof Todo) {
-      return GraphQLTodo;
-    }
-    else if (obj instanceof User) {
+    if (obj instanceof User) {
       return GraphQLUser;
     }
     return null;
   }
 );
 
-const GraphQLTodo = new GraphQLObjectType({
-  name: 'Todo',
-  fields: {
-    id: globalIdField('Todo'),
-    content: {
-      type: GraphQLString
-    },
-    status: {
-      type: GraphQLString
-    },
-  },
-  interfaces: [nodeInterface],
-});
-
-const {
-  connectionType: TodosConnection,
-  edgeType: GraphQLTodoEdge,
-} = connectionDefinitions({
-  name: 'Todo',
-  nodeType: GraphQLTodo,
-});
-
 const GraphQLUser = new GraphQLObjectType({
   name: 'User',
-  fields: {
+  fields: () => ({
     id: globalIdField('User'),
-    email: {
-      type: GraphQLString
-    },
-    password: {
-      type: GraphQLString
-    },
-    salt: {
-      type: GraphQLInt
-    }
-  },
-  interfaces: [nodeInterface],
+    email: { type: GraphQLString },
+    username: { type: GraphQLString },
+    firstName: { type: GraphQLString },
+    lastName: { type: GraphQLString }
+  }),
+  interfaces: [nodeInterface]
 });
 
-const Query = new GraphQLObjectType({
+const dummy = {id: "1", email: "a.g", firstName: "a", lastName: "b"};
+
+const QueryType = new GraphQLObjectType({
   name: 'Query',
-  fields: {
+  fields: () => ({
     viewer: {
       type: GraphQLUser,
       args: {
         id: {type: new GraphQLNonNull(GraphQLID)},
       },
-      resolve: (root, args) => user.read(args.id),
+      resolve: (root, args) => user.read(args.id)
+    },
+    session: {
+      type: GraphQLUser,
+      args: {
+        username: {type: new GraphQLNonNull(GraphQLID)},
+        password: {type: new GraphQLNonNull(GraphQLString)}
+      },
+      resolve: (root, args) => user.authenticate(args.username, args.password)
     },
     node: nodeField,
-  },
-});
-
-const Mutation = new GraphQLObjectType({
-  name: 'Mutation',
-  fields: {
-  },
+  }),
 });
 
 export const schema = new GraphQLSchema({
-  query: Query
+  query: QueryType
 });

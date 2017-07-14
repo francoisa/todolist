@@ -4,12 +4,11 @@ var sqlite3 = require('sqlite3').verbose();
 var db;
 var start;
 
-function createDb(startServer) {
-    console.log("createDb");
-    start = startServer;
-    db = new sqlite3.Database('db\\todolistdb.sqlite3', createUsersTable);
+export function createDb(startServer) {
+  console.log("createDb");
+  start = startServer;
+  db = new sqlite3.Database('db\\todolistdb.sqlite3', createUsersTable);
 }
-
 
 function createUsersTable() {
     console.log("createUsersTable");
@@ -29,5 +28,3 @@ function closeDb() {
     db.close();
     start();
 }
-
-exports.createDb = createDb;

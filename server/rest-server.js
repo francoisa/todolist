@@ -38,10 +38,8 @@ restBuilder.buildUpRestAPI(rest);
 let port = process.env.SRVPORT || 3001;
 let server = http.createServer(app);
 
-function start() {
+export function rest_start() {
   server.listen(port, function () {
   	console.log('rest api server running on http://localhost:' + port)
   });
 }
-
-exports.start = start;

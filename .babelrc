@@ -1,4 +1,14 @@
 {
+  "passPerPreset": true,
   "presets": ["react", "env"],
-  "plugins": ["transform-es2015-destructuring", "transform-object-rest-spread"]
+  "plugins": [
+    "transform-es2015-destructuring",
+    "transform-object-rest-spread",
+    "relay",
+    [ "babel-plugin-transform-require-ignore",
+    {
+      "extensions": [".css", ".sass"]
+    }],
+    "transform-runtime"
+  ]
 }

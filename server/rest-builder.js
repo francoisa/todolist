@@ -6,10 +6,10 @@ const http = require('http');
 const express = require('express');
 const app = express();
 
-var { User, Todo } = require('./sqlite3-dao');
+var { UserDao, TodoDao } = require('./sqlite3-dao');
 
-const user = new User();
-const todo = new Todo();
+const user = new UserDao();
+const todo = new TodoDao();
 
 function buildUpRestAPI(rest) {
   rest.get('/users', function(req, content, cb) {

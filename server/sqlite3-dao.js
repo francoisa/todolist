@@ -12,10 +12,13 @@ function openDb() {
   return db;
 }
 
-function User() {
+export function UserDao() {
+  if (!(this instanceof UserDao)) {
+    return new UserDao();
+  }
 }
 
-User.prototype.list = function() {
+UserDao.prototype.list = function(cb) {
   const db = openDb();
   const sel_user = 'SELECT username, email, first_name, last_name FROM users';
   db.all(sel_user, function(err, rows) {
@@ -27,17 +30,22 @@ User.prototype.list = function() {
       });
     }
     db.close();
-    return users;
+    if (cb) {
+      cb(null, users);
+    }
+    else {
+      return users;
+    }
   });
 }
 
-User.prototype.authenticate = function(id, pwd, cb) {
+UserDao.prototype._authenticate = function(username, pwd, user, resolve, rejecct,
+                                           cb) {
   const db = openDb();
   const sel_user = 'SELECT username, email, password, salt FROM users WHERE ' +
                    'username = ?';
-  var user = {result: "ERROR", code: "INVALID_PASSWORD"};
   var stmt = db.prepare(sel_user);
-  stmt.get(id, function(err, u) {
+  stmt.get(username, function(err, u) {
     if (err) {
       console.log("err: " + err);
     }
@@ -45,7 +53,7 @@ User.prototype.authenticate = function(id, pwd, cb) {
       var password = sha1(pwd + u.salt);
       if (password === u.password) {
         user = {result: "SUCCESS", username: u.username, email: u.email,
-            first_name: u.first_name, last_name: u.last_name};
+            firstName: u.first_name, lastName: u.last_name};
       }
       else {
         console.log(password + ' !== ' + u.password);
@@ -56,31 +64,83 @@ User.prototype.authenticate = function(id, pwd, cb) {
     }
     stmt.finalize();
     db.close();
-    cb(null, user);
+    if (cb) {
+      cb(null, user);
+    }
+    else {
+      console.log("user(" + id + "): " + JSON.stringify(user));
+      if (err) {
+        reject(user);
+      }
+      else {
+        resolve(user);
+      }
+    }
   });
 }
+UserDao.prototype.authenticate = function(username, pwd, cb) {
+  var user = {result: "ERROR", code: "INVALID_PASSWORD"};
+  var _this = this;
+  if (cb) {
+    this._authenticate(username, pwd, user, null, null, cb);
+  }
+  else {
+    return new Promise( function(resolve, reject) {
+      _this._authenticate(username, pwd, user, resolve, reject);
+    });
+  }
+}
 
-User.prototype.read = function(id, cb) {
+UserDao.prototype._read = function(id, user, resolve, reject, cb) {
   const db = openDb();
   const sel_user = 'SELECT username, email, first_name, last_name ' +
-                   'FROM users WHERE username = ?';
-  var user = {result: "ERROR", code: "NOT_FOUND"};
+                   'FROM users WHERE rowid = ?';
   var stmt = db.prepare(sel_user);
   stmt.get(id, function(err, u) {
     if (err) {
       console.log("err: " + err);
     }
     if (u) {
-      user = {username: u.username, email: u.email,
-          first_name: u.first_name, last_name: u.last_name};
+      user = {};
+      user.id = id;
+      user.username = u.username;
+      user.email = u.email;
+      user.firstName = u.first_name;
+      user.lastName = u.last_name;
     }
     stmt.finalize();
     db.close();
-    cb(null, user);
-  });
+    if (cb) {
+      cb(null, user);
+    }
+    else {
+      console.log("user(" + id + "): " + JSON.stringify(user));
+      if (err) {
+        reject(user);
+      }
+      else {
+        resolve(user);
+      }
+    }
+  })
 }
 
-User.prototype.update = function(username, params, cb) {
+UserDao.prototype.read = function(id, cb) {
+  var user = {};
+  user.result = "ERROR";
+  user.code = "NOT_FOUND";
+  var _this = this;
+  if (cb) {
+    this._read(id, user, null, null, cb);
+  }
+  else {
+    return new Promise( function(resolve, reject) {
+      _this._read(id, user, resolve, reject);
+    });
+  }
+}
+
+UserDao.prototype.update = function(username, params, cb) {
   console.log('Executing PUT /user');
   const db = openDb();
   const upd_user = "UPDATE users SET " + param_cql + " WHERE username = ?";
@@ -101,10 +161,15 @@ User.prototype.update = function(username, params, cb) {
     stmt.finalize();
   });
   db.close();
-  cb(null, result);
+  if (cb) {
+    cb(null, result);
+  }
+  else {
+    return result;
+  }
 }
 
-User.prototype.create = function(params, cb) {
+UserDao.prototype.create = function(params, cb) {
   const db = openDb();
   const ins_user = 'INSERT INTO users (username, salt, password, email, first_name, last_name) VALUES (?, ?, ?, ?, ?, ?)';
   var result = {result: "ERROR", code: "INVALID_USER"};
@@ -116,10 +181,15 @@ User.prototype.create = function(params, cb) {
         first_name: content.first_name, last_name: content.last_name};
   });
   db.close();
-  cb(null, result);
+  if (cb) {
+    cb(null, result);
+  }
+  else {
+    return result;
+  }
 }
 
-User.prototype.delete = function(id, cb) {
+UserDao.prototype.delete = function(id, cb) {
   const db = openDb();
   const del_user = 'DELETE FROM users WHERE username = ?';
   var result = {result: "SUCCESS", username: id};
@@ -129,13 +199,18 @@ User.prototype.delete = function(id, cb) {
     stmt.finalize();
   });
   db.close();
-  cb(null, result);
+  if (cb) {
+    cb(null, result);
+  }
+  else {
+    return result;
+  }
 }
 
-function Todo() {
+export function TodoDao() {
 }
 
-Todo.prototype.read = function(id, cb) {
+TodoDao.prototype.read = function(id, cb) {
   const db = openDb();
   const sel_todos = 'SELECT rowid, content, status, username FROM todos WHERE rowid = ?';
   db.all(sel_todos, id, function(err, todos) {
@@ -147,11 +222,16 @@ Todo.prototype.read = function(id, cb) {
       console.log("No rows returned.")
     }
     db.close();
-    cb(null, todos);
+    if (cb) {
+      cb(null, todos);
+    }
+    else {
+      return todos;
+    }
   });
 }
 
-Todo.prototype.list = function(username, cb) {
+TodoDao.prototype.list = function(username, cb) {
   const db = openDb();
   const sel_todos = 'SELECT rowid, content, status FROM todos WHERE username = ?';
   db.all(sel_todos, username, function(err, todos) {
@@ -163,11 +243,16 @@ Todo.prototype.list = function(username, cb) {
       console.log("No rows returned.")
     }
     db.close();
-    cb(null, todos);
+    if (cb) {
+      cb(null, todos);
+    }
+    else {
+      return todos;
+    }
   });
 }
 
-Todo.prototype.create = function(params, cb) {
+TodoDao.prototype.create = function(params, cb) {
   const ins_todo = 'INSERT INTO todos (username, content, status) VALUES (?, ?, ?)';
   const db = openDb();
   var result = {status: "FAILURE", code: "INSERT_FAILED"};
@@ -179,10 +264,12 @@ Todo.prototype.create = function(params, cb) {
               status: params[2]};
   });
   db.close();
-  cb(null, result);
+  if (cb) {
+    cb(null, result);
+  }
 }
 
-Todo.prototype.update = function(params, cb) {
+TodoDao.prototype.update = function(params, cb) {
   const upd_todo = 'UPDATE todos SET content = ?, status = ? WHERE rowid = ?';
   const db = openDb();
   var result = {status: "FAILURE", code: "UPDATE_FAILED"};
@@ -193,10 +280,15 @@ Todo.prototype.update = function(params, cb) {
     result = {status: "SUCCESS"};
   });
   db.close();
-  cb(null, result);
+  if (cb) {
+    cb(null, result);
+  }
+  else {
+    return result;
+  }
 }
 
-Todo.prototype.delete = function(id, cb) {
+TodoDao.prototype.delete = function(id, cb) {
   const del_todo = 'DELETE FROM todos WHERE rowid = ?';
   const db = openDb();
   var todo = {status: "FAILURE", code: "DELETE_FAILED"};
@@ -207,8 +299,10 @@ Todo.prototype.delete = function(id, cb) {
     todo = {status: "SUCCESS"};
   });
   db.close();
-  cb(null, todo);
+  if (cb) {
+    cb(null, todo);
+  }
+  else {
+    return todo;
+  }
 }
-
-exports.User = User;
-exports.Todo = Todo;
