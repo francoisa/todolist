@@ -22,7 +22,6 @@ import {
 } from 'graphql-relay';
 
 import {
-  User,
   UserDao
 } from './sqlite3-dao';
 
@@ -50,6 +49,7 @@ const GraphQLUser = new GraphQLObjectType({
   name: 'User',
   fields: () => ({
     id: globalIdField('User'),
+    rowid: { type: GraphQLString },
     email: { type: GraphQLString },
     username: { type: GraphQLString },
     firstName: { type: GraphQLString },
@@ -82,6 +82,33 @@ const QueryType = new GraphQLObjectType({
   }),
 });
 
+const GraphQLChangeFirstNameMutation = mutationWithClientMutationId({
+  name: 'ChangeFirstName',
+  inputFields: {
+    id: { type: new GraphQLNonNull(GraphQLID) },
+    firstName: { type: new GraphQLNonNull(GraphQLString) },
+  },
+  outputFields: {
+    user: {
+      type: GraphQLUser,
+      resolve: ({localUserId}) => user.read(localUserId)
+    }
+  },
+  mutateAndGetPayload: ({id, firstName}) => {
+    const localUserId = fromGlobalId(id).id;
+    user.updateById(localUserId, {first_name: firstName})
+    return {localUserId};
+  }
+});
+
+const MutationType = new GraphQLObjectType({
+  name: 'Mutation',
+  fields: {
+    changeFirstName: GraphQLChangeFirstNameMutation
+  }
+});
+
 export const schema = new GraphQLSchema({
-  query: QueryType
+  query: QueryType,
+  mutation: MutationType
 });
