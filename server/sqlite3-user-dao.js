@@ -186,15 +186,17 @@ UserDao.prototype._update = function(username, params, resolve, cb) {
 
 UserDao.prototype.updateById = function(rowid, params, cb) {
   if (cb) {
-    this._updateById(rowid, params, cb);
+    this._updateById(rowid, params, null, cb);
   }
   else {
     var _this = this;
-    _this._updateById(rowid, params);
+    return new Promise(function(resolve, reject){
+      _this._updateById(rowid, params, resolve);
+    })
   }
 }
 
-UserDao.prototype._updateById = function(rowid, params, cb) {
+UserDao.prototype._updateById = function(rowid, params, resolve, cb) {
   const db = openDb();
   var upd_params = [];
   var count = Object.keys(params).length;
@@ -218,6 +220,9 @@ UserDao.prototype._updateById = function(rowid, params, cb) {
   console.log("result(" + rowid + "): " + JSON.stringify(result));
   if (cb) {
     cb(null, result);
+  }
+  else {
+    resolve(result);
   }
 }
 
