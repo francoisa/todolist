@@ -43,7 +43,7 @@ UserDao.prototype.list = function(cb) {
   });
 }
 
-UserDao.prototype._authenticate = function(username, pwd, user, resolve, reject,
+UserDao.prototype._authenticate = function(username, pwd, user, resolve,
                                            cb) {
   const db = openDb();
   const sel_user = 'SELECT rowid, username, email, password, salt FROM users WHERE ' +
@@ -72,29 +72,24 @@ UserDao.prototype._authenticate = function(username, pwd, user, resolve, reject,
     }
     else {
       console.log("user(" + username + "): " + JSON.stringify(user));
-      if (err) {
-        reject(user);
-      }
-      else {
-        resolve(user);
-      }
+      resolve(user);
     }
   });
 }
 UserDao.prototype.authenticate = function(username, pwd, cb) {
   var user = {result: "ERROR", code: "INVALID_PASSWORD"};
   if (cb) {
-    this._authenticate(username, pwd, user, null, null, cb);
+    this._authenticate(username, pwd, user, null, cb);
   }
   else {
     var _this = this;
     return new Promise( function(resolve, reject) {
-      _this._authenticate(username, pwd, user, resolve, reject);
+      _this._authenticate(username, pwd, user, resolve);
     });
   }
 }
 
-UserDao.prototype._read = function(id, user, resolve, reject, cb) {
+UserDao.prototype._read = function(id, user, resolve, cb) {
   const db = openDb();
   const sel_user = 'SELECT username, email, first_name, last_name ' +
                    'FROM users WHERE rowid = ?';
@@ -118,12 +113,7 @@ UserDao.prototype._read = function(id, user, resolve, reject, cb) {
     }
     else {
       console.log("user(" + id + "): " + JSON.stringify(user));
-      if (err) {
-        reject(user);
-      }
-      else {
-        resolve(user);
-      }
+      resolve(user);
     }
   })
 }
@@ -133,12 +123,12 @@ UserDao.prototype.read = function(id, cb) {
   user.result = "ERROR";
   user.code = "NOT_FOUND";
   if (cb) {
-    this._read(id, user, null, null, cb);
+    this._read(id, user, null, cb);
   }
   else {
     var _this = this;
     return new Promise( function(resolve, reject) {
-      _this._read(id, user, resolve, reject);
+      _this._read(id, user, resolve);
     });
   }
 }

@@ -12,7 +12,7 @@ export function TodoDao() {
 
 TodoDao.prototype.read = function(id, cb) {
   const db = openDb();
-  const sel_todos = 'SELECT rowid, content, status, username FROM todos WHERE rowid = ?';
+  const sel_todos = 'SELECT rowid, content, status, user_id FROM todos WHERE rowid = ?';
   db.all(sel_todos, id, function(err, todos) {
     if (err) {
       todos = {status: "FAILURE", code: "QUERY_ERROR"};
@@ -31,10 +31,22 @@ TodoDao.prototype.read = function(id, cb) {
   });
 }
 
-TodoDao.prototype.list = function(username, cb) {
+TodoDao.prototype.list = function(user_id, cb) {
+  if (cb) {
+    this._list(user_id, null, cb);
+  }
+  else {
+    var _this = this;
+    return new Promise( function(resolve, reject) {
+      _this._list(user_id, resolve);
+    });
+  }
+}
+
+TodoDao.prototype._list = function(user_id, resolve, cb) {
   const db = openDb();
-  const sel_todos = 'SELECT rowid, content, status FROM todos WHERE username = ?';
-  db.all(sel_todos, username, function(err, todos) {
+  const sel_todos = 'SELECT rowid as id, content, status FROM todos WHERE user_id = ?';
+  db.all(sel_todos, user_id, function(err, todos) {
     if (err) {
       todos = {status: "FAILUE", code: "QUERY_ERROR"};
       console.log("Error '" + err + "' in " + sel_todos)
@@ -43,17 +55,19 @@ TodoDao.prototype.list = function(username, cb) {
       console.log("No rows returned.")
     }
     db.close();
+    console.log("todos(" + user_id + "): " + JSON.stringify(todos));
     if (cb) {
       cb(null, todos);
     }
     else {
-      return todos;
+      resolve(todos);
     }
   });
 }
 
 TodoDao.prototype.create = function(params, cb) {
-  const ins_todo = 'INSERT INTO todos (username, content, status) VALUES (?, ?, ?)';
+  const ins_todo = 'INSERT INTO todos (user_id, content, status, created) VALUES (?, ?, ?, ?)';
+  params.push(new Date());
   const db = openDb();
   var result = {status: "FAILURE", code: "INSERT_FAILED"};
   db.serialize(function() {

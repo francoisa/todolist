@@ -12,7 +12,7 @@ import {
 import {
   connectionArgs,
   connectionDefinitions,
-  connectionFromArray,
+  connectionFromPromisedArray,
   cursorForObjectInConnection,
   fromGlobalId,
   globalIdField,
@@ -22,10 +22,12 @@ import {
 } from 'graphql-relay';
 
 import {
-  UserDao
+  UserDao,
+  TodoDao
 } from './sqlite3-dao';
 
 const user = new UserDao();
+const todo = new TodoDao();
 
 const {nodeInterface, nodeField} = nodeDefinitions(
   (globalId) => {
@@ -35,25 +37,55 @@ const {nodeInterface, nodeField} = nodeDefinitions(
     if (type === 'User') {
       return user.read(id);
     }
+    else if (type === 'Todo') {
+      return todo.read(id);
+    }
     return null;
   },
   (obj) => {
     if (obj instanceof User) {
       return GraphQLUser;
     }
+    else if (obj instanceof Todo) {
+      return GraphQLTodo;
+    }
     return null;
   }
 );
+
+const GraphQLTodo = new GraphQLObjectType({
+  name: 'Todo',
+  fields: () => ({
+    id: globalIdField('Todo'),
+    user_id: { type: GraphQLInt },
+    status: { type: GraphQLString },
+    content: { type: GraphQLString },
+  }),
+  interfaces: [nodeInterface]
+});
+
+const {
+  connectionType: GraphQLTodoConnection,
+  edgeType: TodoEdge,
+} = connectionDefinitions({name: 'Todo',
+                           nodeType: GraphQLTodo});
 
 const GraphQLUser = new GraphQLObjectType({
   name: 'User',
   fields: () => ({
     id: globalIdField('User'),
-    rowid: { type: GraphQLString },
     email: { type: GraphQLString },
     username: { type: GraphQLString },
     firstName: { type: GraphQLString },
-    lastName: { type: GraphQLString }
+    lastName: { type: GraphQLString },
+    todos: {
+      type: GraphQLTodoConnection,
+      args: connectionArgs,
+      resolve: (user, args) => connectionFromPromisedArray(
+        todo.list(user.id),
+        args
+      ),
+    }
   }),
   interfaces: [nodeInterface]
 });
