@@ -133,6 +133,47 @@ UserDao.prototype.read = function(id, cb) {
   }
 }
 
+UserDao.prototype._confirmCreate = function(username, email, resolve, cb) {
+  const db = openDb();
+  const sel_user = 'SELECT username, email, first_name, last_name ' +
+                   'FROM users WHERE username = ? OR email = ?';
+  var stmt = db.prepare(sel_user);
+  stmt.get(username, email, function(err, u) {
+    if (err) {
+      console.log("err: " + err);
+    }
+    if (u) {
+      user = {};
+      user.id = id;
+      user.username = u.username;
+      user.email = u.email;
+      user.firstName = u.first_name;
+      user.lastName = u.last_name;
+    }
+    stmt.finalize();
+    db.close();
+    if (cb) {
+      cb(null, user);
+    }
+    else {
+      console.log("user(" + id + "): " + JSON.stringify(user));
+      resolve(user);
+    }
+  })
+}
+
+UserDao.prototype.confirmCreate = function(username, email, cb) {
+  if (cb) {
+    this._confirmCreate(username, email, null, cb);
+  }
+  else {
+    var _this = this;
+    return new Promise( function(resolve, reject) {
+      _this._confirmCreate(username, email, resolve);
+    });
+  }
+}
+
 UserDao.prototype.update = function(username, params, cb) {
   if (cb) {
     this._update(username, params, null, cb);
@@ -217,22 +258,42 @@ UserDao.prototype._updateById = function(rowid, params, resolve, cb) {
 }
 
 UserDao.prototype.create = function(params, cb) {
+  if (cb) {
+    this._create(params, null, cb);
+  }
+  else {
+    var _this = this;
+    return new Promise(function(resolve, reject){
+      _this._create(params, resolve);
+    })
+  }
+}
+
+UserDao.prototype._create = function(params, resolve, cb) {
   const db = openDb();
+  var ins_params = [];
+  Object.keys(params).forEach (function(p) {
+    ins_params.push(params['username']);
+    ins_params.push(params['salt']);
+    ins_params.push(params['password']);
+    ins_params.push(params['email']);
+    ins_params.push(params['first_name']);
+    ins_params.push(params['last_name']);
+  });
   const ins_user = 'INSERT INTO users (username, salt, password, email, first_name, last_name) VALUES (?, ?, ?, ?, ?, ?)';
   var result = {result: "ERROR", code: "INVALID_USER"};
   db.serialize(function() {
     var stmt = db.prepare(ins_user);
-    stmt.run(params);
+    stmt.run(ins_params);
     stmt.finalize();
-    result = {username: content.username, email: content.email,
-        first_name: content.first_name, last_name: content.last_name};
+    result = {status: "", message: ""};
   });
   db.close();
   if (cb) {
     cb(null, result);
   }
   else {
-    return result;
+    resolve(result);
   }
 }
 

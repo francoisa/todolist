@@ -22,9 +22,12 @@ import {
 } from 'graphql-relay';
 
 import {
+  Status,
   UserDao,
   TodoDao
 } from './sqlite3-dao';
+
+const sha1 = require('sha1');
 
 const user = new UserDao();
 const todo = new TodoDao();
@@ -48,6 +51,9 @@ const {nodeInterface, nodeField} = nodeDefinitions(
     }
     else if (obj instanceof Todo) {
       return GraphQLTodo;
+    }
+    else if (obj instanceof Status) {
+      return GraphQLStatus;
     }
     return null;
   }
@@ -92,6 +98,29 @@ const GraphQLUser = new GraphQLObjectType({
 
 const dummy = {id: "1", email: "a.g", firstName: "a", lastName: "b"};
 
+const GraphQLStatusType = new GraphQLObjectType({
+  name: 'Status',
+  fields: () => ({
+    status: { type: GraphQLString },
+    message: { type: GraphQLString }
+  }),
+  interfaces: [nodeInterface]
+});
+
+
+const GraphQLUserOrStatusType = new GraphQLUnionType({
+  name: 'UserOrStatus',
+  types: [ GraphQLUser, GraphQLStatus ],
+  resolveType(value) {
+    if (value instanceof UserDao) {
+      return GraphQLUserType;
+    }
+    if (value instanceof Status) {
+      return GraphQLStatusType;
+    }
+  }
+});
+
 const QueryType = new GraphQLObjectType({
   name: 'Query',
   fields: () => ({
@@ -114,11 +143,13 @@ const QueryType = new GraphQLObjectType({
   }),
 });
 
-const GraphQLChangeFirstNameMutation = mutationWithClientMutationId({
-  name: 'ChangeFirstName',
+const GraphQLChangeUserMutation = mutationWithClientMutationId({
+  name: 'ChangeUser',
   inputFields: {
     id: { type: new GraphQLNonNull(GraphQLID) },
     firstName: { type: new GraphQLNonNull(GraphQLString) },
+    lastName: { type: new GraphQLNonNull(GraphQLString) },
+    password: { type: new GraphQLNonNull(GraphQLString) },
   },
   outputFields: {
     user: {
@@ -128,7 +159,33 @@ const GraphQLChangeFirstNameMutation = mutationWithClientMutationId({
   },
   mutateAndGetPayload: ({id, firstName}) => {
     const localUserId = fromGlobalId(id).id;
-    user.updateById(localUserId, {first_name: firstName})
+    user.updateById(localUserId, {first_name: firstName, last_name; lastName,
+                                  password: password});
+    return {localUserId};
+  }
+});
+
+const GraphQLCreateUserMutation = mutationWithClientMutationId({
+  name: 'CreateUser',
+  inputFields: {
+    username: { type: new GraphQLNonNull(GraphQLString) },
+    firstName: { type: new GraphQLNonNull(GraphQLString) },
+    lastName: { type: new GraphQLNonNull(GraphQLString) },
+    email: { type: new GraphQLNonNull(GraphQLString) },
+    password: { type: new GraphQLNonNull(GraphQLString) },
+  },
+  outputFields: {
+    user: {
+      type: GraphQLUser,
+      resolve: ({localUserId}) => user.readByUsername(username)
+    }
+  },
+  mutateAndGetPayload: ({id, firstName}) => {
+    const localUserId = fromGlobalId(id).id;
+    salt = Date.now() + '';
+    password = sha1(password + salt);
+    user.create({username: username, first_name: firstName, last_name; lastName, email: email,
+                  password: password});
     return {localUserId};
   }
 });
@@ -136,7 +193,8 @@ const GraphQLChangeFirstNameMutation = mutationWithClientMutationId({
 const MutationType = new GraphQLObjectType({
   name: 'Mutation',
   fields: {
-    changeFirstName: GraphQLChangeFirstNameMutation
+    changeUser: GraphQLChangeUserMutation,
+    createUser: GraphQLCreateUserMutation
   }
 });
 

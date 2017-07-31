@@ -45,16 +45,9 @@ function buildUpRestAPI(rest) {
   rest.post('/user', function(req, content, cb) {
     console.log('Executing POST /user');
     const db = openDb();
-    var params = [];
-    params.push(content.username);
-    var salt = Date.now() + '';
-    params.push(salt);
-    var password = sha1(content.password + salt);
-    params.push(password);
-    params.push(content.email);
-    params.push(content.first_name);
-    params.push(content.last_name);
-    user.create(params, cb);
+    content.salt = Date.now() + '';
+    content.password = sha1(content.password + salt);
+    user.create(content, cb);
   });
 
   rest.del('/user/:user', function(req, content, cb) {
