@@ -1,25 +1,4 @@
-import {
-  GraphQLBoolean,
-  GraphQLID,
-  GraphQLInt,
-  GraphQLList,
-  GraphQLNonNull,
-  GraphQLObjectType,
-  GraphQLSchema,
-  GraphQLString,
-} from 'graphql';
-
-import {
-  connectionArgs,
-  connectionDefinitions,
-  connectionFromArray,
-  cursorForObjectInConnection,
-  fromGlobalId,
-  globalIdField,
-  mutationWithClientMutationId,
-  nodeDefinitions,
-  toGlobalId,
-} from 'graphql-relay';
+import {buildSchema} from 'graphql';
 
 import {
   Todo,
@@ -29,87 +8,79 @@ import {
 let todo = new Todo();
 let user = new User();
 
-const {nodeInterface, nodeField} = nodeDefinitions(
-  (globalId) => {
-    const {type, id} = fromGlobalId(globalId);
-    if (type === 'Todo') {
-      return todo.read(id);
-    }
-    else if (type === 'User') {
-      return user.read(id);
-    }
-    return null;
-  },
-  (obj) => {
-    if (obj instanceof Todo) {
-      return GraphQLTodo;
-    }
-    else if (obj instanceof User) {
-      return GraphQLUser;
-    }
-    return null;
+export const schema = buildSchema(`
+  type Todo {
+      title: String
+      details: String
+      status: String
+      categories: [String]
+      collaborators: [ID]
   }
-);
 
-const GraphQLTodo = new GraphQLObjectType({
-  name: 'Todo',
-  fields: {
-    id: globalIdField('Todo'),
-    content: {
-      type: GraphQLString
-    },
-    status: {
-      type: GraphQLString
-    },
+  type User {
+      email: String
+      password: String
+      items: [Todo]
+  }
+
+  type Query {
+    login(email: String!, pwd: String!) : User
+    collaborators(todoItemId: ID!) : [User]
+    itemsByCategory(category: String!) : [Todo]
+  }
+  `);
+
+function getUser(email, pwd) {
+  var todo = {
+    title: 'say hello',
+    details: 'talk to someone',
+    status: 'open',
+    categories: ['test'],
+    collaborators: ['wasidah@gmail.com']
+  }
+  var user = {
+    email: email,
+    password: pwd,
+    items: [todo]
+  };
+  return user;
+}
+
+function getCollaborators(id) {
+  var todo = {
+    title: 'say hello',
+    details: 'talk to someone',
+    status: 'open',
+    categories: ['test'],
+    collaborators: ['wasidah@gmail.com']
+  }
+  var user = {
+    email: email,
+    password: pwd,
+    items: [todo]
+  };
+  return [user];
+}
+
+function getItemsByCategory(category) {
+  var todo = {
+    title: 'say hello',
+    details: 'talk to someone',
+    status: 'open',
+    categories: ['test'],
+    collaborators: ['wasidah@gmail.com']
+  }
+  return [todo];
+}
+
+export const root = {
+  login: ({email, pwd}) => {
+    return getUser(email, pwd);
   },
-  interfaces: [nodeInterface],
-});
-
-const {
-  connectionType: TodosConnection,
-  edgeType: GraphQLTodoEdge,
-} = connectionDefinitions({
-  name: 'Todo',
-  nodeType: GraphQLTodo,
-});
-
-const GraphQLUser = new GraphQLObjectType({
-  name: 'User',
-  fields: {
-    id: globalIdField('User'),
-    email: {
-      type: GraphQLString
-    },
-    password: {
-      type: GraphQLString
-    },
-    salt: {
-      type: GraphQLInt
-    }
+  collaborators: ({todoItemId}) => {
+    return getCollaborators(todoItemId);
   },
-  interfaces: [nodeInterface],
-});
-
-const Query = new GraphQLObjectType({
-  name: 'Query',
-  fields: {
-    viewer: {
-      type: GraphQLUser,
-      args: {
-        id: {type: new GraphQLNonNull(GraphQLID)},
-      },
-      resolve: (root, args) => user.read(args.id),
-    },
-    node: nodeField,
-  },
-});
-
-const Mutation = new GraphQLObjectType({
-  name: 'Mutation',
-  fields: {
-  },
-});
-
-export const schema = new GraphQLSchema({
-  query: Query
-});
+  itemsByCategory: ({category}) => {
+    return getItemsByCategory(category);
+  }
+}

@@ -1,13 +1,17 @@
 import express from 'express';
 import graphQLHTTP from 'express-graphql';
 import path from 'path';
-import {schema} from './graphql-schema';
+import {root, schema} from './graphql-schema';
 
 const GRAPHQL_PORT = 8080;
 
 // Expose a GraphQL endpoint
 const graphQLServer = express();
-graphQLServer.use('/', graphQLHTTP({schema, pretty: true}));
+graphQLServer.use('/graphql', graphQLHTTP({
+  schema: schema,
+  rootValue: root,
+  graphiql: true,
+  pretty: true}));
 
 function start() {
   graphQLServer.listen(GRAPHQL_PORT, () => console.log(
