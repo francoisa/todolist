@@ -29,7 +29,6 @@ export const schema = buildSchema(`
   type User {
     id: ID
     email: String
-    password: String
     fullName: String
     items: [Todo]
   }
@@ -53,7 +52,7 @@ export const schema = buildSchema(`
   type Mutation {
     createUser(input: UserInput) : User
     updateUser(id: ID!, input: UserInput) : User
-    createTodo(userid: ID!, input: TodoInput) : Todo
+    createTodo(userId: ID!, input: TodoInput) : Todo
     updateTodo(id: ID!, input: TodoInput) : Todo
   }
 `);

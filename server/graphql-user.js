@@ -6,8 +6,10 @@ export function User(database) {
 }
 
 User.prototype.addId = function(id, obj) {
-  obj.id = id;
-  return obj;
+  var copy = Object.assign({}, obj);
+  copy.id = id;
+  delete copy.password;
+  return copy;
 }
 
 User.prototype.login = function({email, pwd}) {
@@ -17,8 +19,8 @@ User.prototype.login = function({email, pwd}) {
   if (id in this.userDb) {
     let user = this.userDb[id];
     if (user.password === pwd) {
-      return user;
-      this.addId(id, user);
+      var copy = this.addId(id, user);
+      return copy;
     }
     else {
       throw new Error('Invalid password for email ' + email);
@@ -36,7 +38,8 @@ User.prototype.create = function({input}) {
     }
     else {
       this.userDb[id] = input;
-      return this.addId(id, input);
+      this.userDb[id].items = [];
+      return this.addId(id, this.userDb[id]);
     }
   }
 
@@ -49,4 +52,8 @@ User.prototype.update = function({id, input}) {
   else {
     throw new Error('email ' + input.email + ' not in db');
   }
+}
+
+User.prototype.get = function(id) {
+  return this.userDb[id];
 }

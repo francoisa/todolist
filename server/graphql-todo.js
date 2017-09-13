@@ -44,8 +44,8 @@ Todo.prototype.create = function(user, {userId, input}) {
   }
   else {
     this.todoDb[id] = input;
-    todo = addId(id, this.todoDb[id]);
-    user[userId].items.append(todo);
+    let todo = this.addId(id, this.todoDb[id]);
+    user.get(userId).items.push(todo);
     return todo;
   }
 }
@@ -54,7 +54,7 @@ Todo.prototype.update = function({id, input}) {
   var id = input.title.hashCode();
   if (id in this.todoDb) {
     this.todoDb[id] = input;
-    return addId(id, this.todoDb[id]);
+    return this.addId(id, this.todoDb[id]);
   }
   else {
     throw new Error('title "' + input.title + '" not in db');
