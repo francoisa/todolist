@@ -8,4 +8,4 @@ export function Status(status, message) {
   this.message = message;
 }
 
-export { TodoDao, UserDao, Status };
+export { TodoDao, UserDao };

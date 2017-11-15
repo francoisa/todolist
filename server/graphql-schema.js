@@ -7,6 +7,7 @@ import {
   GraphQLObjectType,
   GraphQLSchema,
   GraphQLString,
+  GraphQLUnionType
 } from 'graphql';
 
 import {
@@ -98,7 +99,7 @@ const GraphQLUser = new GraphQLObjectType({
 
 const dummy = {id: "1", email: "a.g", firstName: "a", lastName: "b"};
 
-const GraphQLStatusType = new GraphQLObjectType({
+const GraphQLStatus = new GraphQLObjectType({
   name: 'Status',
   fields: () => ({
     status: { type: GraphQLString },
@@ -159,7 +160,7 @@ const GraphQLChangeUserMutation = mutationWithClientMutationId({
   },
   mutateAndGetPayload: ({id, firstName}) => {
     const localUserId = fromGlobalId(id).id;
-    user.updateById(localUserId, {first_name: firstName, last_name; lastName,
+    user.updateById(localUserId, {first_name: firstName, last_name: lastName,
                                   password: password});
     return {localUserId};
   }
@@ -177,16 +178,14 @@ const GraphQLCreateUserMutation = mutationWithClientMutationId({
   outputFields: {
     user: {
       type: GraphQLUser,
-      resolve: ({localUserId}) => user.readByUsername(username)
+      resolve: obj => obj
     }
   },
-  mutateAndGetPayload: ({id, firstName}) => {
-    const localUserId = fromGlobalId(id).id;
-    salt = Date.now() + '';
-    password = sha1(password + salt);
-    user.create({username: username, first_name: firstName, last_name; lastName, email: email,
-                  password: password});
-    return {localUserId};
+  mutateAndGetPayload: (args) => {
+    const salt = Date.now() + '';
+    args.password = sha1(args.password + salt);
+    args.salt = salt;
+    user.create(args).then(result => user.readByUsername(args.username));
   }
 });
 

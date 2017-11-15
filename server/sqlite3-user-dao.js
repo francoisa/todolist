@@ -89,6 +89,51 @@ UserDao.prototype.authenticate = function(username, pwd, cb) {
   }
 }
 
+
+UserDao.prototype._readByUsername = function(username, user, resolve, cb) {
+  const db = openDb();
+  const sel_user = 'SELECT rowid, username, email, first_name, last_name ' +
+                   'FROM users WHERE username = ?';
+  var stmt = db.prepare(sel_user);
+  stmt.get(username, function(err, u) {
+    if (err) {
+      console.log("err: " + err);
+    }
+    if (u) {
+      user = {};
+      user.id = u.rowid;
+      user.username = u.username;
+      user.email = u.email;
+      user.firstName = u.first_name;
+      user.lastName = u.last_name;
+    }
+    stmt.finalize();
+    db.close();
+    if (cb) {
+      cb(null, user);
+    }
+    else {
+      console.log("username: " + username + " id: " + user.id);
+      resolve(user);
+    }
+  })
+}
+
+UserDao.prototype.readByUsername = function(username, cb) {
+  var user = {};
+  user.result = "ERROR";
+  user.code = "NOT_FOUND";
+  if (cb) {
+    this._readByUsername(username, user, null, cb);
+  }
+  else {
+    var _this = this;
+    return new Promise( function(resolve, reject) {
+      _this._readByUsername(username, user, resolve);
+    });
+  }
+}
+
 UserDao.prototype._read = function(id, user, resolve, cb) {
   const db = openDb();
   const sel_user = 'SELECT username, email, first_name, last_name ' +
@@ -263,7 +308,7 @@ UserDao.prototype.create = function(params, cb) {
   }
   else {
     var _this = this;
-    return new Promise(function(resolve, reject){
+    return new Promise(function(resolve, reject) {
       _this._create(params, resolve);
     })
   }
@@ -272,15 +317,14 @@ UserDao.prototype.create = function(params, cb) {
 UserDao.prototype._create = function(params, resolve, cb) {
   const db = openDb();
   var ins_params = [];
-  Object.keys(params).forEach (function(p) {
-    ins_params.push(params['username']);
-    ins_params.push(params['salt']);
-    ins_params.push(params['password']);
-    ins_params.push(params['email']);
-    ins_params.push(params['first_name']);
-    ins_params.push(params['last_name']);
-  });
-  const ins_user = 'INSERT INTO users (username, salt, password, email, first_name, last_name) VALUES (?, ?, ?, ?, ?, ?)';
+  ins_params.push(params.username);
+  ins_params.push(params.salt);
+  ins_params.push(params.password);
+  ins_params.push(params.email);
+  ins_params.push(params.firstName);
+  ins_params.push(params.lastName);
+  const ins_user = 'INSERT INTO users (username, salt, password, email, ' +
+    'first_name, last_name) VALUES (?, ?, ?, ?, ?, ?)';
   var result = {result: "ERROR", code: "INVALID_USER"};
   db.serialize(function() {
     var stmt = db.prepare(ins_user);
@@ -293,6 +337,7 @@ UserDao.prototype._create = function(params, resolve, cb) {
     cb(null, result);
   }
   else {
+    console.log("_create complete");
     resolve(result);
   }
 }
