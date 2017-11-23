@@ -44,6 +44,9 @@ const {nodeInterface, nodeField} = nodeDefinitions(
     else if (type === 'Todo') {
       return todo.read(id);
     }
+    else if (type === 'Status') {
+      return id;
+    }
     return null;
   },
   (obj) => {
@@ -102,6 +105,7 @@ const dummy = {id: "1", email: "a.g", firstName: "a", lastName: "b"};
 const GraphQLStatus = new GraphQLObjectType({
   name: 'Status',
   fields: () => ({
+    id: globalIdField('Status'),
     status: { type: GraphQLString },
     message: { type: GraphQLString }
   }),
@@ -178,14 +182,47 @@ const GraphQLCreateUserMutation = mutationWithClientMutationId({
   outputFields: {
     user: {
       type: GraphQLUser,
-      resolve: obj => obj
+      resolve: (obj) => { return  }
     }
   },
   mutateAndGetPayload: (args) => {
     const salt = Date.now() + '';
     args.password = sha1(args.password + salt);
     args.salt = salt;
-    user.create(args).then(result => user.readByUsername(args.username));
+    return user.create(args).then(result => { return user.readByUsername(result, args.username); } );
+  }
+});
+
+const GraphQLCreateSessionMutation = mutationWithClientMutationId({
+  name: 'CreateSession',
+  inputFields: {
+    username: { type: new GraphQLNonNull(GraphQLString) },
+    password: { type: new GraphQLNonNull(GraphQLString) },
+  },
+  outputFields: {
+    user: {
+      type: GraphQLUser,
+      resolve: (obj) => obj
+    }
+  },
+  mutateAndGetPayload: ({username, password}) => {
+      return user.authenticate(username, password);
+  }
+});
+
+const GraphQLDeleteUserMutation = mutationWithClientMutationId({
+  name: 'DeleteUser',
+  inputFields: {
+    username: { type: new GraphQLNonNull(GraphQLString) }
+  },
+  outputFields: {
+    status: {
+      type: GraphQLStatus,
+      resolve: obj => obj
+    }
+  },
+  mutateAndGetPayload: ({username}) => {
+    return user.delete(username).then(result => result);
   }
 });
 
@@ -193,7 +230,9 @@ const MutationType = new GraphQLObjectType({
   name: 'Mutation',
   fields: {
     changeUser: GraphQLChangeUserMutation,
-    createUser: GraphQLCreateUserMutation
+    createUser: GraphQLCreateUserMutation,
+    deleteUser: GraphQLDeleteUserMutation,
+    createSession: GraphQLCreateSessionMutation
   }
 });
 

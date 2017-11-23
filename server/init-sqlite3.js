@@ -12,8 +12,8 @@ export function createDb(startServer) {
 
 function createUsersTable() {
     console.log("createUsersTable");
-    db.run("CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT, " +
-           "salt TEXT, email TEXT, first_name TEXT, last_name TEXT)",
+    db.run("CREATE TABLE \"users\" ( `username` TEXT UNIQUE, `password` TEXT, " +
+    "`salt` TEXT, `email` TEXT UNIQUE, `first_name` TEXT, `last_name` TEXT )",
            createTodosTable);
 }
 

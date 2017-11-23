@@ -46,7 +46,7 @@ UserDao.prototype.list = function(cb) {
 UserDao.prototype._authenticate = function(username, pwd, user, resolve,
                                            cb) {
   const db = openDb();
-  const sel_user = 'SELECT rowid, username, email, password, salt FROM users WHERE ' +
+  const sel_user = 'SELECT rowid, first_name, last_name, username, email, password, salt FROM users WHERE ' +
                    'username = ?';
   var stmt = db.prepare(sel_user);
   stmt.get(username, function(err, u) {
@@ -56,7 +56,8 @@ UserDao.prototype._authenticate = function(username, pwd, user, resolve,
     if (u) {
       var password = sha1(pwd + u.salt);
       if (password === u.password) {
-        user = {result: "SUCCESS", rowid: u.rowid, username: u.username, email: u.email};
+        user = {result: "SUCCESS", id: u.rowid, firstName: u.first_name,
+          lastName: u.last_name, username: u.username, email: u.email};
       }
       else {
         console.log(password + ' !== ' + u.password);
@@ -90,12 +91,11 @@ UserDao.prototype.authenticate = function(username, pwd, cb) {
 }
 
 
-UserDao.prototype._readByUsername = function(username, user, resolve, cb) {
-  const db = openDb();
+UserDao.prototype._readByUsername = function(db, username, user, resolve, cb) {
   const sel_user = 'SELECT rowid, username, email, first_name, last_name ' +
                    'FROM users WHERE username = ?';
   var stmt = db.prepare(sel_user);
-  stmt.get(username, function(err, u) {
+  stmt.get([username], function(err, u) {
     if (err) {
       console.log("err: " + err);
     }
@@ -113,23 +113,21 @@ UserDao.prototype._readByUsername = function(username, user, resolve, cb) {
       cb(null, user);
     }
     else {
-      console.log("username: " + username + " id: " + user.id);
+      console.log("_readByUsername(" + username + ") user: " + JSON.stringify(user));
       resolve(user);
     }
   })
 }
 
-UserDao.prototype.readByUsername = function(username, cb) {
-  var user = {};
-  user.result = "ERROR";
-  user.code = "NOT_FOUND";
+UserDao.prototype.readByUsername = function(db, username, cb) {
+  var user = {result: "ERROR", code: "NOT_FOUND"};
   if (cb) {
     this._readByUsername(username, user, null, cb);
   }
   else {
     var _this = this;
     return new Promise( function(resolve, reject) {
-      _this._readByUsername(username, user, resolve);
+      _this._readByUsername(db, username, user, resolve);
     });
   }
 }
@@ -326,36 +324,54 @@ UserDao.prototype._create = function(params, resolve, cb) {
   const ins_user = 'INSERT INTO users (username, salt, password, email, ' +
     'first_name, last_name) VALUES (?, ?, ?, ?, ?, ?)';
   var result = {result: "ERROR", code: "INVALID_USER"};
+  db.exec("BEGIN");
   db.serialize(function() {
     var stmt = db.prepare(ins_user);
     stmt.run(ins_params);
     stmt.finalize();
     result = {status: "", message: ""};
   });
-  db.close();
+  db.exec("COMMIT");
   if (cb) {
+    db.close();
     cb(null, result);
   }
   else {
     console.log("_create complete");
-    resolve(result);
+    resolve(db);
   }
 }
 
-UserDao.prototype.delete = function(id, cb) {
+UserDao.prototype.delete = function(username, cb) {
+  if (cb) {
+    this._delete(username, null, cb);
+  }
+  else {
+    var _this = this;
+    return new Promise(function(resolve, reject) {
+      _this._delete(username, resolve);
+    })
+  }
+}
+
+UserDao.prototype._delete = function(username, resolve, cb) {
   const db = openDb();
+  var del_params = [];
+  del_params.push(username);
   const del_user = 'DELETE FROM users WHERE username = ?';
-  var result = {result: "SUCCESS", username: id};
+  var result = {result: "ERROR", code: "INVALID_USER"};
   db.serialize(function() {
     var stmt = db.prepare(del_user);
-    stmt.run(id);
+    stmt.run(del_params);
     stmt.finalize();
+    result = {status: "SUCCESS", message: "User " + username + " deleted."};
   });
   db.close();
   if (cb) {
     cb(null, result);
   }
   else {
-    return result;
+    console.log("_delete(" + username + ") complete");
+    resolve(result);
   }
 }
