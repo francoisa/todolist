@@ -1,12 +1,6 @@
-"use strict"
+import { openDb } from './init-sqlite3';
 
 const sha1 = require('sha1');
-var sqlite3 = require('sqlite3').verbose();
-
-function openDb() {
-  const db = new sqlite3.Database('db\\todolistdb.sqlite3');
-  return db;
-}
 
 const db_column_dict = {firstName: "first_name", lastName: "last_name"};
 
@@ -337,7 +331,7 @@ UserDao.prototype._create = function(params, resolve, cb) {
     cb(null, result);
   }
   else {
-    console.log("_create complete");
+    console.log("_create(" + params.username + ") complete");
     resolve(db);
   }
 }
@@ -347,7 +341,7 @@ UserDao.prototype.delete = function(username, cb) {
     this._delete(username, null, cb);
   }
   else {
-    var _this = this;
+    const _this = this;
     return new Promise(function(resolve, reject) {
       _this._delete(username, resolve);
     })
@@ -356,22 +350,22 @@ UserDao.prototype.delete = function(username, cb) {
 
 UserDao.prototype._delete = function(username, resolve, cb) {
   const db = openDb();
-  var del_params = [];
-  del_params.push(username);
+  const del_params = [username];
   const del_user = 'DELETE FROM users WHERE username = ?';
-  var result = {result: "ERROR", code: "INVALID_USER"};
+  var result = {id: username, status: "ERROR", message: "INVALID_USER"};
   db.serialize(function() {
-    var stmt = db.prepare(del_user);
+    const stmt = db.prepare(del_user);
     stmt.run(del_params);
     stmt.finalize();
-    result = {status: "SUCCESS", message: "User " + username + " deleted."};
+    result.status = "SUCCESS";
+    result.message = "User " + username + " deleted.";
   });
   db.close();
   if (cb) {
     cb(null, result);
   }
   else {
-    console.log("_delete(" + username + ") complete");
+    console.log(`_delete(${username}) complete`);
     resolve(result);
   }
 }

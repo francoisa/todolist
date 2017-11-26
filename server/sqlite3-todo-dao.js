@@ -3,7 +3,8 @@
 var sqlite3 = require('sqlite3').verbose();
 
 function openDb() {
-  const db = new sqlite3.Database('db\\todolistdb.sqlite3');
+  sqlite3.verbose();
+  const db = new sqlite3.Database('db/todolistdb.sqlite3');
   return db;
 }
 

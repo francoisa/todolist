@@ -182,7 +182,7 @@ const GraphQLCreateUserMutation = mutationWithClientMutationId({
   outputFields: {
     user: {
       type: GraphQLUser,
-      resolve: (obj) => { return  }
+      resolve: obj => obj
     }
   },
   mutateAndGetPayload: (args) => {

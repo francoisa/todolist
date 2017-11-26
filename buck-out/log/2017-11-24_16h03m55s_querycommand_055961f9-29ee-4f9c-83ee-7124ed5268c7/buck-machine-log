@@ -1,0 +1,3 @@
+InvocationInfo {"buildId":"055961f9-29ee-4f9c-83ee-7124ed5268c7","superConsoleEnabled":false,"isDaemon":true,"subCommand":"querycommand","commandArgs":["query","--json","owner(\"D\\:\\\\github\\\\francoisa\\\\todolist\\\\server\\\\sqlite3-user-dao.js\")","--config","client.id=nuclide"],"unexpandedCommandArgs":["query","--json","owner(\"D\\:\\\\github\\\\francoisa\\\\todolist\\\\server\\\\sqlite3-user-dao.js\")","--config","client.id=nuclide"],"buckLogDir":"buck-out\\log","timestampMillis":1511539435458}
+Cache.Stats {"cacheHitsPerMode":{"dir":0},"cacheErrorsPerMode":{"dir":0},"totalCacheHits":0,"totalCacheErrors":0,"totalCacheMisses":0,"totalCacheIgnores":0,"totalCacheLocalKeyUnchangedHits":0,"successUploadCount":0,"failureUploadCount":0}
+ExitCode {"exitCode":-1}
